@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AskMe – 1 lien, 1 milliard de boîtes</title>
+  <meta name="description" content="Envoie un message anonyme. Reçois des réponses. 1 lien = ta boîte privée." />
+  <meta name="theme-color" content="#8e24aa" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>Purple Heart</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>Purple Heart</text></svg>">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Adsterra Banner -->
+  <script type="text/javascript">
+    atOptions = { 'key' : 'd28c84bc09ba13c021b7c86ca0e0f926', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+  </script>
+  <script type="text/javascript" src="//www.highperformanceformat.com/d28c84bc09ba13c021b7c86ca0e0f926/invoke.js" async></script>
+
+  <!-- EffectiveCPM Push + Native -->
+  <script async="async" data-cfasync="false" src="//pl27943468.effectivegatecpm.com/b6b699f8e40fa7da8f1c4f30fd4b22ca/invoke.js"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <!-- VISITEUR -->
+    <div id="visitor" class="view active">
+      <h1>AskMe</h1>
+      <p class="subtitle">Envoie un message anonyme</p>
+      <div class="visitor">
+        <textarea id="input" placeholder="Écris ici... (illimité)"></textarea>
+        <button id="send" class="send">Envoyer</button>
+      </div>
+
+      <!-- Adsterra Banner -->
+      <div class="ad-banner">
+        <script type="text/javascript">
+          atOptions = { 'key' : 'd28c84bc09ba13c021b7c86ca0e0f926', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script type="text/javascript" src="//www.highperformanceformat.com/d28c84bc09ba13c021b7c86ca0e0f926/invoke.js" async></script>
+      </div>
+    </div>
+
+    <!-- PROPRIÉTAIRE -->
+    <div id="owner" class="view">
+      <h1>AskMe</h1>
+      <div class="header-bar">
+        <span class="count" id="count">0 message</span>
+        <button id="share" class="share">Copier lien</button>
+      </div>
+      <div id="list" class="messages"></div>
+      <div class="footer-hint">
+        <span id="hint">Ajoute sur l’écran d’accueil</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE -->
+  <div id="modal" class="modal">
+    <div class="modal-box">
+      <button class="close">×</button>
+      <div id="full" class="msg-full"></div>
+
+      <!-- EffectiveCPM Native Ad -->
+      <div class="native-ad">
+        <div id="container-b6b699f8e40fa7da8f1c4f30fd4b22ca"></div>
+      </div>
+
+      <div class="responses">
+        <textarea id="reply" placeholder="Réponds..."></textarea>
+        <button id="sendReply">Envoyer</button>
+        <div id="replies" class="resp-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <button id="install" class="install" title="Installer">Add</button>
+
+  <!-- Adsterra Popunder -->
+  <script>
+    if (!sessionStorage.getItem('popunder_shown')) {
+      setTimeout(() => {
+        const s = document.createElement('script');
+        s.src = '//www.highperformanceformat.com/d28c84bc09ba13c021b7c86ca0e0f926/invoke.js?popunder=1';
+        document.body.appendChild(s);
+        sessionStorage.setItem('popunder_shown', 'true');
+      }, 3000);
+    }
+  </script>
+
+  <!-- JS -->
+  <script src="script.js" defer></script>
+</body>
+</html>
