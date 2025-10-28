@@ -3,47 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AskMe – 1 lien, 1 milliard de boîtes</title>
-  <meta name="description" content="Envoie un message anonyme. Reçois des réponses. 1 lien = ta boîte privée." />
+  <title>AskMe – Boîtes privées</title>
+  <meta name="description" content="1 lien, 1 milliard de boîtes privées." />
   <meta name="theme-color" content="#8e24aa" />
 
   <!-- PWA -->
-  <link rel="manifest" href="manifest.json" />
+  <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>Purple Heart</text></svg>">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>Purple Heart</text></svg>">
+  <link rel="stylesheet" href="/style.css" />
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- Adsterra Banner -->
+  <!-- Adsterra + EffectiveCPM -->
   <script type="text/javascript">
     atOptions = { 'key' : 'd28c84bc09ba13c021b7c86ca0e0f926', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
   </script>
   <script type="text/javascript" src="//www.highperformanceformat.com/d28c84bc09ba13c021b7c86ca0e0f926/invoke.js" async></script>
-
-  <!-- EffectiveCPM Push + Native -->
   <script async="async" data-cfasync="false" src="//pl27943468.effectivegatecpm.com/b6b699f8e40fa7da8f1c4f30fd4b22ca/invoke.js"></script>
 
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="app">
-    <!-- VISITEUR -->
-    <div id="visitor" class="view active">
+    <!-- LISTE DES BOÎTES -->
+    <div id="boxes" class="view active">
+      <h1>Mes boîtes</h1>
+      <p class="subtitle">Épingle tes boîtes privées</p>
+      <div id="boxList" class="messages"></div>
+      <button id="newBox" class="send">+ Nouvelle boîte</button>
+      <div class="ad-banner">
+        <script type="text/javascript" src="//www.highperformanceformat.com/d28c84bc09ba13c021b7c86ca0e0f926/invoke.js" async></script>
+      </div>
+    </div>
+
+    <!-- ENVOI (PUBLIC) -->
+    <div id="visitor" class="view">
       <h1>AskMe</h1>
       <p class="subtitle">Envoie un message anonyme</p>
       <div class="visitor">
-        <textarea id="input" placeholder="Écris ici... (illimité)"></textarea>
+        <textarea id="input" placeholder="Écris ici..."></textarea>
         <button id="send" class="send">Envoyer</button>
-      </div>
-
-      <!-- Adsterra Banner -->
-      <div class="ad-banner">
-        <script type="text/javascript">
-          atOptions = { 'key' : 'd28c84bc09ba13c021b7c86ca0e0f926', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
-        </script>
-        <script type="text/javascript" src="//www.highperformanceformat.com/d28c84bc09ba13c021b7c86ca0e0f926/invoke.js" async></script>
       </div>
     </div>
 
@@ -51,13 +48,12 @@
     <div id="owner" class="view">
       <h1>AskMe</h1>
       <div class="header-bar">
+        <button id="back" class="share">Back</button>
         <span class="count" id="count">0 message</span>
         <button id="share" class="share">Copier lien</button>
       </div>
       <div id="list" class="messages"></div>
-      <div class="footer-hint">
-        <span id="hint">Ajoute sur l’écran d’accueil</span>
-      </div>
+      <div class="footer-hint"><span id="hint">Ajoute sur l’écran d’accueil</span></div>
     </div>
   </div>
 
@@ -66,12 +62,7 @@
     <div class="modal-box">
       <button class="close">×</button>
       <div id="full" class="msg-full"></div>
-
-      <!-- EffectiveCPM Native Ad -->
-      <div class="native-ad">
-        <div id="container-b6b699f8e40fa7da8f1c4f30fd4b22ca"></div>
-      </div>
-
+      <div class="native-ad"><div id="container-b6b699f8e40fa7da8f1c4f30fd4b22ca"></div></div>
       <div class="responses">
         <textarea id="reply" placeholder="Réponds..."></textarea>
         <button id="sendReply">Envoyer</button>
@@ -82,7 +73,7 @@
 
   <button id="install" class="install" title="Installer">Add</button>
 
-  <!-- Adsterra Popunder -->
+  <!-- Popunder -->
   <script>
     if (!sessionStorage.getItem('popunder_shown')) {
       setTimeout(() => {
@@ -94,7 +85,6 @@
     }
   </script>
 
-  <!-- JS -->
-  <script src="script.js" defer></script>
+  <script src="/script.js" defer></script>
 </body>
 </html>
