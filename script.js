@@ -1,190 +1,202 @@
 const params = new URLSearchParams(location.search);
 const SEND_ID = params.get('send');
 const VIEW_ID = params.get('view');
+const IS_SENDER = !!SEND_ID || (!SEND_ID && !VIEW_ID);
 const IS_OWNER = !!VIEW_ID;
-const IS_SENDER = !!SEND_ID || !VIEW_ID;
 
-// Clé de stockage = SEND_ID (tous les messages vont dans la même boîte)
-const STORAGE_KEY = `askme_box_${SEND_ID || VIEW_ID || 'temp'}`;
-let msgs = IS_OWNER ? (JSON.parse(localStorage.getItem(STORAGE_KEY)) || []) : [];
+const BOXES_KEY = 'askme_my_boxes';
+let myBoxes = JSON.parse(localStorage.getItem(BOXES_KEY)) || [];
 
-// Génère un nouvel ID pour la boîte
-function generateBoxId() {
-  return Math.random().toString(36).substr(2, 9);
+// Éléments
+const boxesView = document.getElementById('boxes');
+const visitor = document.getElementById('visitor');
+const owner = document.getElementById('owner');
+const boxList = document.getElementById('boxList');
+const newBoxBtn = document.getElementById('newBox');
+const backBtn = document.getElementById('back');
+
+// === FONCTIONS BOÎTES ===
+function saveBoxes() {
+  localStorage.setItem(BOXES_KEY, JSON.stringify(myBoxes));
 }
 
-// Génère un VIEW_ID (clé privée)
-function generateViewId() {
-  return Math.random().toString(36).substr(2, 12);
+function addBox(boxId, viewKey, title = 'Boîte anonyme') {
+  if (myBoxes.find(b => b.boxId === boxId)) return;
+  myBoxes.push({ boxId, viewKey, title, pinned: false, created: Date.now() });
+  saveBoxes();
+  renderBoxes();
 }
 
-const v = document.getElementById('visitor');
-const o = document.getElementById('owner');
-const input = document.getElementById('input');
-const send = document.getElementById('send');
-const list = document.getElementById('list');
-const count = document.getElementById('count');
-const share = document.getElementById('share');
-const modal = document.getElementById('modal');
-const full = document.getElementById('full');
-const reply = document.getElementById('reply');
-const sendReply = document.getElementById('sendReply');
-const replies = document.getElementById('replies');
-const close = document.querySelector('.close');
-const install = document.getElementById('install');
-const hint = document.getElementById('hint');
+function togglePin(boxId) {
+  const box = myBoxes.find(b => b.boxId === boxId);
+  if (box) {
+    box.pinned = !box.pinned;
+    saveBoxes();
+    renderBoxes();
+  }
+}
 
-// === MODE VISITEUR (ENVOI) ===
-if (!IS_OWNER) {
-  v.classList.add('active');
-  o.classList.remove('active');
+function openBox(viewKey) {
+  window.location.href = `?view=${viewKey}`;
+}
 
-  send.onclick = async () => {
+function renderBoxes() {
+  boxList.innerHTML = '';
+  if (myBoxes.length === 0) {
+    boxList.innerHTML = '<div style="text-align:center; opacity:0.7; padding:20px;">Aucune boîte. Crée-en une !</div>';
+    return;
+  }
+
+  // Tri : épinglées d'abord
+  const sorted = [...myBoxes].sort((a, b) => b.pinned - a.pinned || b.created - a.created);
+
+  sorted.forEach(box => {
+    const div = document.createElement('div');
+    div.className = 'box-item';
+    div.innerHTML = `
+      <div class="box-info">
+        <div class="box-title">${esc(box.title)}</div>
+        <div class="box-meta">Créée ${fmt(box.created)}</div>
+      </div>
+      <button class="pin ${box.pinned ? 'pinned' : ''}" title="Épingler">Star</button>
+    `;
+    div.onclick = e => {
+      if (e.target.classList.contains('pin')) {
+        e.stopPropagation();
+        togglePin(box.boxId);
+      } else {
+        openBox(box.viewKey);
+      }
+    };
+    boxList.appendChild(div);
+  });
+}
+
+// === NOUVELLE BOÎTE ===
+newBoxBtn.onclick = () => {
+  const boxId = genId();
+  const viewKey = genViewKey();
+  addBox(boxId, viewKey, 'Nouvelle boîte');
+  window.location.href = `?view=${viewKey}`;
+};
+
+// === MODE ENVOI ===
+if (IS_SENDER && !VIEW_ID) {
+  boxesView.classList.remove('active');
+  visitor.classList.add('active');
+
+  const boxId = SEND_ID || genId();
+  const storageKey = `askme_box_${boxId}`;
+  let msgs = JSON.parse(localStorage.getItem(storageKey)) || [];
+
+  document.getElementById('send').onclick = async () => {
     const text = input.value.trim();
     if (!text) return;
-
-    let sendId = SEND_ID;
-    let isFirstSend = false;
-
-    // Première fois → génère la boîte
-    if (!SEND_ID && !VIEW_ID) {
-      sendId = generateBoxId();
-      isFirstSend = true;
-    } else if (VIEW_ID) {
-      // Si on a un VIEW_ID → on est déjà propriétaire
-      sendId = VIEW_ID;
-    } else {
-      sendId = SEND_ID;
-    }
-
-    const key = `askme_box_${sendId}`;
-    let box = JSON.parse(localStorage.getItem(key)) || [];
-    box.push({ text, t: Date.now(), r: [] });
-    localStorage.setItem(key, JSON.stringify(box));
-
+    msgs.push({ text, t: Date.now(), r: [] });
+    localStorage.setItem(storageKey, JSON.stringify(msgs));
     input.value = '';
     toast('Envoyé !');
 
-    // === PREMIER ENVOI → GÉNÈRE LIEN PRIVÉ ===
-    if (isFirstSend) {
-      const viewId = generateViewId();
-      localStorage.setItem(`askme_view_${sendId}`, viewId); // Sauvegarde la clé privée
-
-      const viewUrl = `${location.origin}${location.pathname}?view=${viewId}`;
-      const sendUrl = `${location.origin}${location.pathname}?send=${sendId}`;
-
-      // Copie le lien privé (seul le propriétaire le voit)
-      try {
-        await navigator.clipboard.writeText(viewUrl);
-        toast('Lien privé copié ! (accès à tes messages)');
-      } catch {
-        toast('Lien privé : ' + viewUrl);
-      }
-
-      // Optionnel : affiche lien public
-      setTimeout(() => {
-        toast('Lien public (partage) : ?send=' + sendId);
-      }, 2500);
-
-      // Redirige vers le lien d’envoi
-      history.replaceState(null, '', `?send=${sendId}`);
+    if (!SEND_ID) {
+      const viewKey = genViewKey();
+      localStorage.setItem(`askme_box_for_${viewKey}`, boxId);
+      addBox(boxId, viewKey);
+      const viewUrl = `${location.origin}${location.pathname}?view=${viewKey}`;
+      await navigator.clipboard.writeText(viewUrl);
+      toast('Lien privé copié !');
+      history.replaceState(null, '', `?send=${boxId}`);
     }
   };
 }
 
-// === MODE PROPRIÉTAIRE (LECTURE) ===
+// === MODE PROPRIÉTAIRE ===
 if (IS_OWNER) {
-  // Vérifie que le VIEW_ID correspond à la boîte
-  const expectedViewId = localStorage.getItem(`askme_view_${VIEW_ID}`);
-  if (!expectedViewId || expectedViewId !== VIEW_ID) {
-    // Accès refusé → redirige vers mode envoi
-    const sendId = VIEW_ID;
-    window.location.href = `?send=${sendId}`;
-    throw new Error('Accès refusé');
-  }
+  const boxId = localStorage.getItem(`askme_box_for_${VIEW_ID}`);
+  if (!boxId) { toast('Lien invalide'); setTimeout(() => location.href = '/', 2000); }
+  const storageKey = `askme_box_${boxId}`;
+  let msgs = JSON.parse(localStorage.getItem(storageKey)) || [];
+  let current = null;
 
-  v.classList.remove('active');
-  o.classList.add('active');
-  render();
+  visitor.classList.remove('active');
+  owner.classList.add('active');
+  backBtn.onclick = () => location.href = '/';
+  renderOwner();
   updateCount();
 
-  share.onclick = () => {
-    const sendUrl = `${location.origin}${location.pathname}?send=${VIEW_ID}`;
-    navigator.clipboard.writeText(sendUrl).then(() => toast('Lien public copié ! (partage)'));
+  document.getElementById('share').onclick = () => {
+    const url = `${location.origin}${location.pathname}?send=${boxId}`;
+    navigator.clipboard.writeText(url).then(() => toast('Lien public copié !'));
   };
 
-  sendReply.onclick = () => {
+  document.getElementById('sendReply').onclick = () => {
     const text = reply.value.trim();
     if (!text || !current) return;
     current.r.push({ text, t: Date.now() });
-    save();
+    saveOwner();
     renderReplies();
     reply.value = '';
     toast('Réponse envoyée');
   };
 
-  close.onclick = () => modal.classList.remove('active');
-  modal.onclick = e => e.target === modal && modal.classList.remove('active');
+  function renderOwner() {
+    const list = document.getElementById('list');
+    list.innerHTML = '';
+    if (msgs.length === 0) {
+      list.innerHTML = '<div style="text-align:center; opacity:0.7; padding:20px;">Aucun message...</div>';
+      return;
+    }
+    msgs.slice().reverse().forEach((m, i) => {
+      const idx = msgs.length - 1 - i;
+      const card = document.createElement('div');
+      card.className = 'msg-card';
+      card.innerHTML = `<div class="preview">${esc(m.text)}</div><div class="date">${fmt(m.t)}</div><button class="del">Delete</button>`;
+      card.onclick = e => { if (!e.target.classList.contains('del')) open(m); };
+      card.querySelector('.del').onclick = e => {
+        e.stopPropagation();
+        if (confirm('Supprimer ?')) {
+          msgs.splice(idx, 1);
+          saveOwner();
+          renderOwner();
+          updateCount();
+        }
+      };
+      list.appendChild(card);
+    });
+  }
+
+  function open(m) { current = m; full.innerHTML = esc(m.text); renderReplies(); modal.classList.add('active'); }
+  function renderReplies() {
+    replies.innerHTML = '';
+    if (!current.r?.length) {
+      replies.innerHTML = '<div style="opacity:0.6; font-size:0.9em;">Aucune réponse</div>';
+      return;
+    }
+    current.r.slice().reverse().forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'resp';
+      div.innerHTML = `<div>${esc(r.text)}</div><small>${fmt(r.t)}</small>`;
+      replies.appendChild(div);
+    });
+  }
+  function saveOwner() { localStorage.setItem(storageKey, JSON.stringify(msgs)); }
+  function updateCount() { count.textContent = msgs.length ? `${msgs.length} message${msgs.length > 1 ? 's' : ''}` : 'Aucun message'; }
 }
 
-// === FONCTIONS COMMUNES ===
-function render() {
-  list.innerHTML = '';
-  msgs.slice().reverse().forEach((m, i) => {
-    const idx = msgs.length - 1 - i;
-    const card = document.createElement('div');
-    card.className = 'msg-card';
-    card.innerHTML = `
-      <div class="preview">${esc(m.text)}</div>
-      <div class="date">${fmt(m.t)}</div>
-      <button class="del" title="Supprimer">Delete</button>
-    `;
-    card.onclick = e => {
-      if (e.target.classList.contains('del')) return;
-      open(m);
-    };
-    card.querySelector('.del').onclick = e => {
-      e.stopPropagation();
-      if (confirm('Supprimer ?')) {
-        msgs.splice(idx, 1);
-        save();
-        render();
-        updateCount();
-        toast('Supprimé');
-      }
-    };
-    list.appendChild(card);
-  });
+// === PAGE D'ACCUEIL (LISTE) ===
+if (!SEND_ID && !VIEW_ID) {
+  renderBoxes();
 }
 
-function open(m) {
-  current = m;
-  full.innerHTML = esc(m.text);
-  renderReplies();
-  modal.classList.add('active');
-}
-
-function renderReplies() {
-  replies.innerHTML = '';
-  current.r.slice().reverse().forEach(r => {
-    const div = document.createElement('div');
-    div.className = 'resp';
-    div.innerHTML = `<div>${esc(r.text)}</div><small>${fmt(r.t)}</small>`;
-    replies.appendChild(div);
-  });
-}
-
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs)); }
-function updateCount() { count.textContent = msgs.length === 0 ? 'Aucun message' : msgs.length === 1 ? '1 message' : `${msgs.length} messages`; }
+// === FONCTIONS UTILITAIRES ===
+function genId() { return Math.random().toString(36).substr(2, 9); }
+function genViewKey() { return Math.random().toString(36).substr(2, 15); }
 function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 function fmt(ts) {
-  if (!ts) return '';
-  const d = new Date(ts);
   const diff = Date.now() - ts;
   if (diff < 60000) return 'À l\'instant';
   if (diff < 3600000) return `Il y a ${Math.floor(diff/60000)} min`;
   if (diff < 86400000) return `Il y a ${Math.floor(diff/3600000)} h`;
-  return d.toLocaleDateString('fr');
+  return new Date(ts).toLocaleDateString('fr');
 }
 function toast(msg) {
   const t = document.createElement('div');
@@ -192,10 +204,7 @@ function toast(msg) {
   t.textContent = msg;
   document.body.appendChild(t);
   requestAnimationFrame(() => t.style.opacity = '1');
-  setTimeout(() => {
-    t.style.opacity = '0';
-    setTimeout(() => t.remove(), 300);
-  }, 3000);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
 }
 
 // PWA
